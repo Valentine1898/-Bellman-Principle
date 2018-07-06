@@ -1,0 +1,126 @@
+function [minusIopt]=Optimal15(dt)
+X0=0;
+Y0=0;
+XT=0;
+Yobm=50000;
+Lobm=2000;
+t0=0;
+T=36;
+tau=6;
+N=(T-t0)/dt;
+n=(tau-t0)/dt;
+%Обмеження рівності:
+ObmRivA=[];
+ObmRivB=[];
+i=1;
+while(i<=n+1)
+    ObmRivA(i,i)=1;
+    ObmRivB(i)=0;
+    i=i+1;
+end
+i=1;
+while(i<=N)
+    ObmRivA(n+i+1,n+i+1)=1;
+    ObmRivA(n+i+1,n+i)=-1;
+    ObmRivA(n+i+1,i)=-dt*0.5/12;
+    ObmRivA(n+i+1,n+(N+1)*2+i)=-dt;
+    ObmRivB(n+i+1)=0;
+    i=i+1;
+end
+i=1;
+while(i<=N)
+    ObmRivA(N+1+n+i,N+1+n+i+1)=1;
+    ObmRivA(N+1+n+i,N+1+n+i)=-1-0.3*dt/12;
+    ObmRivA(N+1+n+i,n+(N+1)*2+i)=-dt;
+    ObmRivA(N+1+n+i,n+(N+1)*3)=0;
+    ObmRivB(N+1+n+i)=0;
+    i=i+1;
+end
+%Крайові умови
+ObmRivA(n+1+2*N+1,n+1)=1;
+ObmRivB(n+1+2*N+1)=Y0;
+ObmRivA(n+1+2*N+2,n+1+N+1)=1;
+ObmRivB(n+1+2*N+2)=X0;
+ObmRivA(n+1+2*N+3,n+1+(N+1)*2-1)=1;
+ObmRivB(n+1+2*N+3)=XT;
+%-\-\-\-\-\-\-\-\-\-\-\-\-\-\
+ObmRivA
+ObmRivB
+%Обмеження нерівності
+ObmNerivA=[];
+ObmNerivB=[];
+i=1;
+while(i<=N+1)
+    ObmNerivA(i,n+i)=1;
+    ObmNerivB(i)=Yobm;
+    i=i+1;
+end
+i=1;
+while(i<=N+1)
+    ObmNerivA(N+1+i,n+2*(N+1)+i)=1;
+    ObmNerivB(N+1+i)=Lobm;
+    i=i+1;
+end
+i=1;
+while(i<=N+1)
+    ObmNerivA((N+1)*2+i,n+i)=-1;
+    ObmNerivB((N+1)*2+i)=0;
+    i=i+1;
+end
+i=1;
+while(i<=N+1)
+    ObmNerivA((N+1)*3+i,N+1+n+i)=-1;
+    ObmNerivB((N+1)*3+i)=0;
+    i=i+1;
+end
+ ObmNerivA
+  ObmNerivB
+%\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\
+%Цільова функція
+F=[];
+i=1;
+while(i<=N)
+F(n+i)=-dt;
+i=i+1;
+end
+F(N+1+n)=-1;
+i=1;
+while(i<=N)
+F(N+1+n+i)=dt;
+i=i+1;
+end
+i=1;
+while(i<=N+1)
+F((N+1)*2+n+i)=0;
+i=i+1;
+end
+[H,Iopt,flag]=linprog(F,ObmNerivA,ObmNerivB,ObmRivA,ObmRivB);
+%Час
+t=[];
+Y=[];
+i=1;
+while(i<=N+1)
+    Y(i)=H(n+i);
+i=i+1;    
+end
+X=[];
+i=1;
+while(i<=N+1)
+    X(i)=H(n+N+1+i);
+i=i+1;    
+end
+L=[];
+i=1;
+while(i<=N+1)
+    L(i)=H(n+2*(N+1)+i);
+i=i+1;    
+end
+i=1;
+while(i<=N+1)
+    t(i)=t0+dt*(i-1);
+    i=i+1;
+end
+Y(N+1);
+minusIopt=-Iopt;
+flag;
+plot(t,X)
